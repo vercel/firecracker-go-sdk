@@ -110,7 +110,6 @@ type JailerCommandBuilder struct {
 	uid      int
 	gid      int
 	execFile string
-	node     int
 
 	// optional params
 	chrootBaseDir   string
@@ -120,6 +119,7 @@ type JailerCommandBuilder struct {
 	cgroupVersion   string
 	cgroupArgs      []string
 	parentCgroup    string
+	node            *int
 
 	stdin  io.Reader
 	stdout io.Writer
@@ -149,9 +149,11 @@ func (b JailerCommandBuilder) Args() []string {
 	args = append(args, "--gid", strconv.Itoa(b.gid))
 	args = append(args, "--exec-file", b.execFile)
 
-	if cpulist := getNumaCpuset(b.node); len(cpulist) > 0 {
-		args = append(args, "--cgroup", fmt.Sprintf("cpuset.mems=%d", b.node))
-		args = append(args, "--cgroup", fmt.Sprintf("cpuset.cpus=%s", cpulist))
+	if b.node != nil {
+		if cpulist := getNumaCpuset(*b.node); len(cpulist) > 0 {
+			args = append(args, "--cgroup", fmt.Sprintf("cpuset.mems=%d", *b.node))
+			args = append(args, "--cgroup", fmt.Sprintf("cpuset.cpus=%s", cpulist))
+		}
 	}
 
 	for _, cgroupArg := range b.cgroupArgs {
@@ -230,7 +232,7 @@ func (b JailerCommandBuilder) WithExecFile(path string) JailerCommandBuilder {
 // If those files are also configured using WithCgroupArgs, the values passed to
 // WithCgroupArgs will take precedence.
 func (b JailerCommandBuilder) WithNumaNode(node int) JailerCommandBuilder {
-	b.node = node
+	b.node = &node
 	return b
 }
 
@@ -389,7 +391,6 @@ func jail(ctx context.Context, m *Machine, cfg *Config) error {
 		WithID(cfg.JailerCfg.ID).
 		WithUID(*cfg.JailerCfg.UID).
 		WithGID(*cfg.JailerCfg.GID).
-		WithNumaNode(*cfg.JailerCfg.NumaNode).
 		WithExecFile(cfg.JailerCfg.ExecFile).
 		WithChrootBaseDir(cfg.JailerCfg.ChrootBaseDir).
 		WithDaemonize(cfg.JailerCfg.Daemonize).
@@ -410,6 +411,10 @@ func jail(ctx context.Context, m *Machine, cfg *Config) error {
 
 	if stdin := cfg.JailerCfg.Stdin; stdin != nil {
 		builder = builder.WithStdin(stdin)
+	}
+
+	if cfg.JailerCfg.NumaNode != nil {
+		builder = builder.WithNumaNode(*cfg.JailerCfg.NumaNode)
 	}
 
 	m.cmd = builder.Build(ctx)
