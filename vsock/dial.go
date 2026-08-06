@@ -123,23 +123,33 @@ func dial(ctx context.Context, udsPath string, port uint32, c config) (net.Conn,
 		attemptCount++
 		logger := logger.WithField("attempt", attemptCount)
 
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-tickerCh:
-			conn, err := tryConnect(logger, udsPath, port, c)
-			if isTemporaryNetErr(err) {
-				err = fmt.Errorf("temporary vsock dial failure: %w", err)
-				logger.WithError(err).Debug()
-				continue
-			} else if err != nil {
-				err = fmt.Errorf("non-temporary vsock dial failure: %w", err)
-				logger.WithError(err).Error()
+		// Attempt immediately on the first iteration; only wait for the
+		// ticker between retries. Waiting for the first tick added a full
+		// RetryInterval of latency before the initial attempt.
+		if attemptCount == 1 {
+			if err := ctx.Err(); err != nil {
 				return nil, err
 			}
-
-			return conn, nil
+		} else {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-tickerCh:
+			}
 		}
+
+		conn, err := tryConnect(logger, udsPath, port, c)
+		if isTemporaryNetErr(err) {
+			err = fmt.Errorf("temporary vsock dial failure: %w", err)
+			logger.WithError(err).Debug()
+			continue
+		} else if err != nil {
+			err = fmt.Errorf("non-temporary vsock dial failure: %w", err)
+			logger.WithError(err).Error()
+			return nil, err
+		}
+
+		return conn, nil
 	}
 }
 
