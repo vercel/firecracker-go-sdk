@@ -328,7 +328,7 @@ paths:
       description:
         Updates the Virtual Machine Configuration with the specified input.
         Firecracker starts with default values for vCPU count (=1) and memory size (=128 MiB).
-        The vCPU count is restricted to the [1, 32] range.
+        The vCPU count is restricted to the [1, 64] range.
         With SMT enabled, the vCPU count is required to be either 1 or an even number in the range.
         otherwise there are no restrictions regarding the vCPU count.
         If any of the parameters has an incorrect value, the whole update fails.
@@ -1024,7 +1024,7 @@ definitions:
       vcpu_count:
         type: integer
         minimum: 1
-        maximum: 32
+        maximum: 64
         description: Number of vCPUs (either 1 or an even number)
 
   MemoryBackend:

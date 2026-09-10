@@ -45,7 +45,7 @@ type MachineConfiguration struct {
 
 	// Number of vCPUs (either 1 or an even number)
 	// Required: true
-	// Maximum: 32
+	// Maximum: 64
 	// Minimum: 1
 	VcpuCount *int64 `json:"vcpu_count"`
 }
@@ -107,7 +107,7 @@ func (m *MachineConfiguration) validateVcpuCount(formats strfmt.Registry) error 
 		return err
 	}
 
-	if err := validate.MaximumInt("vcpu_count", "body", int64(*m.VcpuCount), 32, false); err != nil {
+	if err := validate.MaximumInt("vcpu_count", "body", int64(*m.VcpuCount), 64, false); err != nil {
 		return err
 	}
 
