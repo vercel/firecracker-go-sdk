@@ -21,6 +21,9 @@ type SnapshotConfig struct {
 	SnapshotPath        string
 	EnableDiffSnapshots bool
 	ResumeVM            bool
+	// ClockRealtime advances kvm-clock on x86_64 restore. Requires a supporting
+	// Firecracker version and host Linux >= 5.16.
+	ClockRealtime bool
 }
 
 // GetMemBackendPath returns the effective memory backend path. If MemBackend

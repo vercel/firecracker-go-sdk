@@ -98,3 +98,11 @@ func WithMemoryBackend(backendType, backendPath string) WithSnapshotOpt {
 		}
 	}
 }
+
+// WithClockRealtime advances kvm-clock by the elapsed wall-clock time on restore.
+// It requires x86_64, a supporting Firecracker version, and host Linux >= 5.16.
+func WithClockRealtime(enabled bool) WithSnapshotOpt {
+	return func(cfg *SnapshotConfig) {
+		cfg.ClockRealtime = enabled
+	}
+}

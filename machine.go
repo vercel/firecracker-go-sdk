@@ -1190,6 +1190,7 @@ func (m *Machine) loadSnapshot(ctx context.Context, snapshot *SnapshotConfig) er
 		SnapshotPath:        &snapshot.SnapshotPath,
 		EnableDiffSnapshots: snapshot.EnableDiffSnapshots,
 		ResumeVM:            snapshot.ResumeVM,
+		ClockRealtime:       snapshot.ClockRealtime,
 	}
 
 	if _, err := m.client.LoadSnapshot(ctx, snapshotParams); err != nil {

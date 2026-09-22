@@ -541,6 +541,21 @@ func TestHandlers(t *testing.T) {
 		Config  Config
 	}{
 		{
+			Handler: LoadSnapshotHandler,
+			Client: fctesting.MockClient{
+				LoadSnapshotFn: func(params *ops.LoadSnapshotParams) (*ops.LoadSnapshotNoContent, error) {
+					called = LoadSnapshotHandler.Name
+					if !params.Body.ClockRealtime {
+						return nil, fmt.Errorf("clock_realtime was not forwarded")
+					}
+					return &ops.LoadSnapshotNoContent{}, nil
+				},
+			},
+			Config: Config{
+				Snapshot: SnapshotConfig{ClockRealtime: true},
+			},
+		},
+		{
 			Handler: BootstrapLoggingHandler,
 			Client: fctesting.MockClient{
 				PutLoggerFn: func(params *ops.PutLoggerParams) (*ops.PutLoggerNoContent, error) {
