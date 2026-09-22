@@ -30,6 +30,9 @@ import (
 // swagger:model SnapshotLoadParams
 type SnapshotLoadParams struct {
 
+	// On x86_64, advance kvm-clock by the wall-clock time elapsed since capture. Requires Firecracker support for clock_realtime and host Linux >= 5.16.
+	ClockRealtime bool `json:"clock_realtime,omitempty"`
+
 	// Enable support for incremental (diff) snapshots by tracking dirty guest pages.
 	EnableDiffSnapshots bool `json:"enable_diff_snapshots,omitempty"`
 
