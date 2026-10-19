@@ -94,6 +94,11 @@ type JailerConfig struct {
 	// microvm in the <cgroup_base>/<parent_cgroup> subfolder.
 	ParentCgroup string
 
+	// FirecrackerArgs are extra arguments for the Firecracker process, for
+	// example "--enable-pci". The jailer passes them to Firecracker after the
+	// arguments that the SDK sets (seccomp, --api-sock, --level).
+	FirecrackerArgs []string
+
 	// Stdout specifies the IO writer for STDOUT to use when spawning the jailer.
 	Stdout io.Writer
 	// Stderr specifies the IO writer for STDERR to use when spawning the jailer.
@@ -386,6 +391,8 @@ func jail(ctx context.Context, m *Machine, cfg *Config) error {
 	if cfg.LogLevel != "" {
 		fcArgs = append(fcArgs, "--level", cfg.LogLevel)
 	}
+
+	fcArgs = append(fcArgs, cfg.JailerCfg.FirecrackerArgs...)
 
 	builder := NewJailerCommandBuilder().
 		WithID(cfg.JailerCfg.ID).
