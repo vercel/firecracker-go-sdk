@@ -178,6 +178,7 @@ func TestJail(t *testing.T) {
 	var testCases = []struct {
 		name             string
 		jailerCfg        JailerConfig
+		firecrackerArgs  []string
 		expectedArgs     []string
 		netns            string
 		socketPath       string
@@ -301,13 +302,13 @@ func TestJail(t *testing.T) {
 		{
 			name: "extra firecracker args",
 			jailerCfg: JailerConfig{
-				ID:              "my-test-id",
-				UID:             Int(123),
-				GID:             Int(100),
-				ChrootStrategy:  NewNaiveChrootStrategy("kernel-image-path"),
-				ExecFile:        "/path/to/firecracker",
-				FirecrackerArgs: []string{"--enable-pci"},
+				ID:             "my-test-id",
+				UID:            Int(123),
+				GID:            Int(100),
+				ChrootStrategy: NewNaiveChrootStrategy("kernel-image-path"),
+				ExecFile:       "/path/to/firecracker",
 			},
+			firecrackerArgs: []string{"--enable-pci"},
 			expectedArgs: []string{
 				defaultJailerBin,
 				"--id",
@@ -378,10 +379,11 @@ func TestJail(t *testing.T) {
 				},
 			}
 			cfg := &Config{
-				VMID:       "vmid",
-				JailerCfg:  &c.jailerCfg,
-				NetNS:      c.netns,
-				SocketPath: c.socketPath,
+				VMID:            "vmid",
+				JailerCfg:       &c.jailerCfg,
+				NetNS:           c.netns,
+				SocketPath:      c.socketPath,
+				FirecrackerArgs: c.firecrackerArgs,
 			}
 			jail(context.Background(), m, cfg)
 

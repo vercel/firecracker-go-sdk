@@ -2439,3 +2439,16 @@ func testUpdateBalloonStats(ctx context.Context, t *testing.T, m *Machine) {
 		t.Errorf("Updating balloon staistics failed from testUpdateBalloonStats: %s", err)
 	}
 }
+
+func TestConfigureBuilderWithFirecrackerArgs(t *testing.T) {
+	cfg := Config{
+		SocketPath:      "foo/bar",
+		VMID:            "vmid",
+		FirecrackerArgs: []string{"--enable-pci"},
+	}
+	cmd := configureBuilder(VMCommandBuilder{}.WithBin("firecracker"), cfg).Build(context.Background())
+	args := cmd.Args
+	if len(args) == 0 || args[len(args)-1] != "--enable-pci" {
+		t.Errorf("expected --enable-pci as the last argument, got %v", args)
+	}
+}

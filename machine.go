@@ -158,6 +158,11 @@ type Config struct {
 	// restrictive they should be.
 	Seccomp SeccompConfig
 
+	// FirecrackerArgs are extra arguments for the Firecracker process, for
+	// example "--enable-pci". The SDK adds them after the arguments that it
+	// sets, with or without the jailer.
+	FirecrackerArgs []string
+
 	// MmdsAddress is IPv4 address used by guest applications when issuing requests to MMDS.
 	// It is possible to use a valid IPv4 link-local address (169.254.0.0/16).
 	// If not provided, the default address (169.254.169.254) will be used.
@@ -355,7 +360,8 @@ func configureBuilder(builder VMCommandBuilder, cfg Config) VMCommandBuilder {
 	return builder.
 		WithSocketPath(cfg.SocketPath).
 		AddArgs("--id", cfg.VMID).
-		AddArgs(seccompArgs(&cfg)...)
+		AddArgs(seccompArgs(&cfg)...).
+		AddArgs(cfg.FirecrackerArgs...)
 }
 
 // NewMachine initializes a new Machine instance and performs validation of the
