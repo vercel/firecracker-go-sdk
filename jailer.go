@@ -387,6 +387,8 @@ func jail(ctx context.Context, m *Machine, cfg *Config) error {
 		fcArgs = append(fcArgs, "--level", cfg.LogLevel)
 	}
 
+	fcArgs = append(fcArgs, cfg.FirecrackerArgs...)
+
 	builder := NewJailerCommandBuilder().
 		WithID(cfg.JailerCfg.ID).
 		WithUID(*cfg.JailerCfg.UID).
