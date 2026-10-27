@@ -321,6 +321,7 @@ var loadSnapshotRemoveHandlerList = []Handler{
 	CreateBootSourceHandler,
 	AttachDrivesHandler,
 	CreateNetworkInterfacesHandler,
+	AddVsocksHandler,
 	ConfigMmdsHandler,
 }
 
