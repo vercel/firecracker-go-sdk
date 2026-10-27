@@ -737,3 +737,27 @@ func compareHandlerLists(l1, l2 HandlerList) bool {
 
 	return true
 }
+
+// TestWithSnapshotRemovesBootDeviceHandlers verifies that loading a snapshot
+// configures no device the snapshot restores. Firecracker rejects a snapshot
+// load after boot-specific resources such as vsock devices are configured.
+func TestWithSnapshotRemovesBootDeviceHandlers(t *testing.T) {
+	m, err := NewMachine(context.Background(), Config{
+		DisableValidation: true,
+		VsockDevices:      []VsockDevice{{Path: "vsock.sock", CID: 3}},
+	}, WithLogger(fctesting.NewLogEntry(t)), WithSnapshot("mem", "snapshot"))
+	if err != nil {
+		t.Fatalf("NewMachine: %v", err)
+	}
+	for _, h := range loadSnapshotRemoveHandlerList {
+		if m.Handlers.FcInit.Has(h.Name) {
+			t.Errorf("handler %q must not run before a snapshot load", h.Name)
+		}
+	}
+	if m.Handlers.FcInit.Has(AddVsocksHandlerName) {
+		t.Errorf("vsock devices are restored from the snapshot; %q must not run", AddVsocksHandlerName)
+	}
+	if !m.Handlers.FcInit.Has(LoadSnapshotHandlerName) {
+		t.Errorf("handler %q must load the snapshot", LoadSnapshotHandlerName)
+	}
+}
