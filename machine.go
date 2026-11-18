@@ -277,6 +277,12 @@ type Machine struct {
 	shutdownCh chan struct{}
 	// fatalErr records an error that either stops or prevent starting the VMM
 	fatalErr error
+	// processExited is closed once the VMM process has been reaped, after
+	// which processState holds its exit state.
+	processExited chan struct{}
+	// processState is the exit state of the reaped VMM process. It is written
+	// only before processExited is closed.
+	processState *os.ProcessState
 
 	// callbacks that should be run when the machine is being torn down
 	cleanupOnce  sync.Once
@@ -368,9 +374,10 @@ func configureBuilder(builder VMCommandBuilder, cfg Config) VMCommandBuilder {
 // provided Config.
 func NewMachine(ctx context.Context, cfg Config, opts ...Opt) (*Machine, error) {
 	m := &Machine{
-		exitCh:     make(chan struct{}),
-		shutdownCh: make(chan struct{}),
-		cleanupCh:  make(chan struct{}),
+		exitCh:        make(chan struct{}),
+		shutdownCh:    make(chan struct{}),
+		cleanupCh:     make(chan struct{}),
+		processExited: make(chan struct{}),
 	}
 
 	if cfg.VMID == "" {
@@ -491,6 +498,19 @@ func (m *Machine) Wait(ctx context.Context) error {
 	}
 }
 
+// ProcessState returns the exit state of the VMM process once this machine
+// has reaped it, including its resource usage. It returns nil while the
+// process runs and when it never started. With a daemonized jailer the reaped
+// process is the jailer's parent, which exits once it daemonizes.
+func (m *Machine) ProcessState() *os.ProcessState {
+	select {
+	case <-m.processExited:
+		return m.processState
+	default:
+		return nil
+	}
+}
+
 // GetFirecrackerVersion gets the machine's firecracker version and returns it
 func (m *Machine) GetFirecrackerVersion(ctx context.Context) (string, error) {
 	resp, err := m.client.GetFirecrackerVersion(ctx)
@@ -600,6 +620,8 @@ func (m *Machine) startVMM(ctx context.Context) error {
 	errCh := make(chan error)
 	go func() {
 		waitErr := m.cmd.Wait()
+		m.processState = m.cmd.ProcessState
+		close(m.processExited)
 
 		// If using daemonized jailer and parent exits cleanly,
 		// this is expected behavior. Don't treat it as an error.
