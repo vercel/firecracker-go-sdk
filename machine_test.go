@@ -1641,6 +1641,25 @@ func TestWaitWithNoSocket(t *testing.T) {
 	}
 }
 
+func TestProcessState(t *testing.T) {
+	ctx := context.Background()
+
+	socketPath := filepath.Join(testDataPath, t.Name())
+	defer os.Remove(socketPath)
+	cfg := createValidConfig(t, socketPath)
+
+	m, err := NewMachine(ctx, cfg, WithProcessRunner(exec.Command("sh", "-c", "exit 3")))
+	require.NoError(t, err)
+	require.Nil(t, m.ProcessState(), "ProcessState() before the VMM starts")
+
+	err = m.Start(ctx)
+	require.Error(t, err, "Start() reports the VMM exiting before it serves its API")
+
+	state := m.ProcessState()
+	require.NotNil(t, state, "ProcessState() once the VMM has been reaped")
+	require.Equal(t, 3, state.ExitCode())
+}
+
 type machineConfigOpt func(c *Config)
 
 func withRootDrive(rootfs string) machineConfigOpt {
